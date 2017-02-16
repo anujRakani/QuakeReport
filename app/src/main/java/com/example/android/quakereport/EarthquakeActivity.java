@@ -15,9 +15,12 @@
  */
 package com.example.android.quakereport;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.ArrayAdapter;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -32,14 +35,7 @@ public class EarthquakeActivity extends AppCompatActivity {
         setContentView(R.layout.earthquake_activity);
 
         // Create a fake list of earthquake locations.
-        ArrayList<Earthquake> earthquakes = new ArrayList<Earthquake>();
-        earthquakes.add(new Earthquake("9.4","San Francisco","Jul 10, 2015"));
-        earthquakes.add(new Earthquake("5.4","London","Jan 12, 2016"));
-        earthquakes.add(new Earthquake("6.8","Tokyo","Apr 16, 2013"));
-        earthquakes.add(new Earthquake("4.9","Mexico City","Aug 23, 2012"));
-        earthquakes.add(new Earthquake("8.4","Moscow","May 30, 2015"));
-        earthquakes.add(new Earthquake("5.8","Rio de Janeiro","Oct 18, 2011"));
-        earthquakes.add(new Earthquake("4.8","Paris","Dec 1, 2014"));
+        final ArrayList<Earthquake> earthquakes = QueryUtils.extractEarthquakes();
 
         // Find a reference to the {@link ListView} in the layout
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
@@ -50,5 +46,16 @@ public class EarthquakeActivity extends AppCompatActivity {
         // Set the adapter on the {@link ListView}
         // so the list can be populated in the user interface
         earthquakeListView.setAdapter(adapter);
+
+        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Uri webpage = Uri.parse(earthquakes.get(position).getmURL());
+                Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                }
+            }
+        });
     }
 }
