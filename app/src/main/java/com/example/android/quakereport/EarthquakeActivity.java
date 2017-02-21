@@ -24,21 +24,45 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EarthquakeActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
 
+    /** Adapter for the list of earthquakes */
+    private EarthquakeAdapter mAdapter;
+
     /** URL for earthquake data from the USGS dataset */
     private static final String USGS_REQUEST_URL =
             "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=6&limit=10";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
+
+        // Find a reference to the {@link ListView} in the layout
+        ListView earthquakeListView = (ListView) findViewById(R.id.list);
+
+        // Create a new {@link ArrayAdapter} of earthquakes
+        mAdapter = new EarthquakeAdapter(this, new ArrayList<Earthquake>());
+
+        // Set the adapter on the {@link ListView}
+        // so the list can be populated in the user interface
+        earthquakeListView.setAdapter(mAdapter);
+
+        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Uri webpage = Uri.parse(mAdapter.getItem(position).getmURL());
+                Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                }
+            }
+        });
 
         new EarthquakeAsyncTask().execute(USGS_REQUEST_URL);
 
@@ -47,27 +71,8 @@ public class EarthquakeActivity extends AppCompatActivity {
     /**
      * Update the UI with the given earthquake information.
      */
-    private void updateUi(final List<Earthquake> earthquakes) {
-        // Find a reference to the {@link ListView} in the layout
-        ListView earthquakeListView = (ListView) findViewById(R.id.list);
+    private void updateUi(List<Earthquake> earthquakesList) {
 
-        // Create a new {@link ArrayAdapter} of earthquakes
-        EarthquakeAdapter adapter = new EarthquakeAdapter(this, earthquakes);
-
-        // Set the adapter on the {@link ListView}
-        // so the list can be populated in the user interface
-        earthquakeListView.setAdapter(adapter);
-
-        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Uri webpage = Uri.parse(earthquakes.get(position).getmURL());
-                Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
-                if (intent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(intent);
-                }
-            }
-        });
     }
 
     private class EarthquakeAsyncTask extends AsyncTask<String, Void, List<Earthquake>> {
@@ -82,14 +87,15 @@ public class EarthquakeActivity extends AppCompatActivity {
             return earthquakes;
         }
 
-        protected void onPostExecute(List<Earthquake> earthquakes) {
-            // If there is no result, do nothing.
-            if (earthquakes == null) {
-                return;
-            }
+        protected void onPostExecute(List<Earthquake> data) {
+            // Clear the adapter of previous earthquake data
+            mAdapter.clear();
 
-            // Update the information displayed to the user.
-            updateUi(earthquakes);
+            // If there is a valid list of {@link Earthquake}s, then add them to the adapter's
+            // data set. This will trigger the ListView to update.
+            if (data != null && !data.isEmpty()) {
+                mAdapter.addAll(data);
+            }
         }
     }
 
