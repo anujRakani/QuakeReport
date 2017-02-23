@@ -24,6 +24,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +47,8 @@ public class EarthquakeActivity extends AppCompatActivity
     /** URL for earthquake data from the USGS dataset */
     private static final String USGS_REQUEST_URL =
             "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=2&limit=10";
+
+    private TextView mEmptyStateTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,14 +76,10 @@ public class EarthquakeActivity extends AppCompatActivity
             }
         });
 
+        mEmptyStateTextView = (TextView) findViewById(R.id.empty_state);
+        earthquakeListView.setEmptyView(mEmptyStateTextView);
+
         getLoaderManager().initLoader(EARTHQUAKE_LOADER_ID, null, this);
-
-    }
-
-    /**
-     * Update the UI with the given earthquake information.
-     */
-    private void updateUi(List<Earthquake> earthquakesList) {
 
     }
 
@@ -90,6 +90,13 @@ public class EarthquakeActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+        // Hide loading indicator because the data has been loaded
+        ProgressBar loadingIndProgBar = (ProgressBar) findViewById(R.id.loading_indicator);
+        loadingIndProgBar.setVisibility(View.GONE);
+
+        // Set empty state text to display "No earthquakes found."
+        mEmptyStateTextView.setText(R.string.no_earthquakes);
+
         // Clear the adapter of previous earthquake data
         mAdapter.clear();
 
